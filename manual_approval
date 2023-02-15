@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    stages {
+        stage('hello'){
+            steps {
+                echo "hello world"
+            }
+        }
+        stage("deploy"){
+            steps {
+            script {
+
+                 def USER_INPUT = input(
+                    message: 'User input required - Do you want to proceed?',
+                    parameters: [
+                            [$class: 'ChoiceParameterDefinition',
+                             choices: ['no','yes'].join('\n'),
+                             name: 'input',
+                             description: 'Menu - select box option']
+                    ])
+                    echo "The answer is: ${USER_INPUT}"
+                    if( "${USER_INPUT}" == "yes"){
+                        echo "deploy the application"
+                    }
+                    else { 
+                        echo "this stage is skipped due to "
+                    }
+            }
+            }
+                        
+                    }
+        }
+    }
+    
