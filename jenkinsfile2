@@ -1,0 +1,34 @@
+pipeline {
+    agent { node { label "slave1" }}
+    stages{
+        stage("check out"){
+            steps{
+                git branch: 'main', url: 'https://github.com/govardhan992/dockerhub.git'
+            }
+        }
+        stage("build docker image"){
+            steps {
+                sh"docker build -t govardhanr992/apache:${BUILD_NUMBER} ." 
+            }
+        }
+        stage("push the docker image"){
+            steps{
+      withCredentials([string(credentialsId: 'dockerhub_cred', variable: 'dockerhub_cred')]) {
+       
+      sh "docker login -u govardhanr992 -p ${dockerhub_cred}"
+     }
+          sh "docker push govardhanr992/apache:${BUILD_NUMBER}"
+            }
+        }
+        stage("deploy"){
+            steps {
+                sshagent(['deploy_container']) {
+                    
+              sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.82.191 docker pull govardhanr992/apache:${BUILD_NUMBER}'
+              sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.82.191 docker rm -f webserver1 || true'
+              sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.82.191 docker run -d -p 8090:8080 --name webserver1 govardhanr992/apache:${BUILD_NUMBER}'
+}
+            }
+        }
+    }
+}
